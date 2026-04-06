@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PortfolioIQ — Know What Your Portfolio Is Really Doing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #0c0e0f;
+    --cream: #f5f0e8;
+    --warm: #ede8dc;
+    --gold: #b8933a;
+    --gold-light: #d4a84b;
+    --green: #2a6b45;
+    --green-light: #3a8f5c;
+    --red: #8b2a2a;
+    --muted: #6b6560;
+    --border: #d8d0c4;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--cream);
+    color: var(--ink);
+    font-family: 'Syne', sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 18px 48px;
+    background: rgba(245,240,232,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; font-weight: 700; letter-spacing: 0.02em;
+    color: var(--ink);
+  }
+  .nav-logo span { color: var(--gold); }
+  .nav-links { display: flex; gap: 32px; align-items: center; }
+  .nav-links a { font-size: 13px; font-weight: 600; color: var(--muted); text-decoration: none; letter-spacing: 0.06em; text-transform: uppercase; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--ink); }
+  .nav-cta {
+    background: var(--ink); color: var(--cream);
+    padding: 10px 22px; border-radius: 4px;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    text-decoration: none; transition: background 0.2s;
+  }
+  .nav-cta:hover { background: var(--gold); color: var(--ink); }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: grid; grid-template-columns: 1fr 1fr;
+    align-items: center;
+    padding: 120px 48px 80px;
+    gap: 60px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 80% 50%, rgba(184,147,58,0.08) 0%, transparent 70%),
+      repeating-linear-gradient(0deg, transparent, transparent 59px, rgba(184,147,58,0.06) 59px, rgba(184,147,58,0.06) 60px),
+      repeating-linear-gradient(90deg, transparent, transparent 59px, rgba(184,147,58,0.06) 59px, rgba(184,147,58,0.06) 60px);
+    pointer-events: none;
+  }
+
+  .hero-left { position: relative; z-index: 1; }
+
+  .hero-tag {
+    display: inline-block;
+    background: var(--ink); color: var(--gold);
+    font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 6px 14px; border-radius: 2px; margin-bottom: 28px;
+  }
+
+  .hero-headline {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(48px, 5vw, 72px);
+    font-weight: 700; line-height: 1.05;
+    color: var(--ink); margin-bottom: 24px;
+  }
+  .hero-headline em { font-style: italic; color: var(--gold); }
+
+  .hero-sub {
+    font-size: 16px; line-height: 1.7; color: var(--muted);
+    max-width: 460px; margin-bottom: 40px;
+    font-weight: 400;
+  }
+
+  .hero-actions { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; margin-bottom: 48px; }
+
+  .btn-main {
+    background: var(--ink); color: var(--cream);
+    padding: 16px 32px; border-radius: 4px;
+    font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    text-decoration: none; transition: all 0.2s; display: inline-block;
+    border: 2px solid var(--ink);
+  }
+  .btn-main:hover { background: var(--gold); border-color: var(--gold); color: var(--ink); transform: translateY(-2px); }
+
+  .btn-outline {
+    border: 2px solid var(--border); color: var(--muted);
+    padding: 14px 28px; border-radius: 4px;
+    font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    text-decoration: none; transition: all 0.2s; display: inline-block;
+  }
+  .btn-outline:hover { border-color: var(--ink); color: var(--ink); }
+
+  .hero-social-proof {
+    display: flex; gap: 32px;
+  }
+  .proof-item { }
+  .proof-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 24px; font-weight: 500; color: var(--ink);
+    display: block;
+  }
+  .proof-label {
+    font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600;
+  }
+
+  /* Mock dashboard */
+  .hero-right { position: relative; z-index: 1; }
+  .mock-card {
+    background: #0c0e0f;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.06);
+    transform: perspective(1000px) rotateY(-4deg) rotateX(2deg);
+    transition: transform 0.4s ease;
+  }
+  .mock-card:hover { transform: perspective(1000px) rotateY(-1deg) rotateX(0deg); }
+
+  .mock-topbar {
+    background: #111316; padding: 14px 20px;
+    display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid #1e2228;
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  .mock-body { padding: 24px; }
+
+  .mock-score-row { display: flex; gap: 16px; margin-bottom: 20px; }
+  .mock-score {
+    background: #111316; border-radius: 10px; padding: 16px 20px;
+    flex: 1; display: flex; align-items: center; gap: 14px;
+  }
+  .score-ring-mock {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: conic-gradient(#4ade80 0% 72%, #1e2228 72% 100%);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .score-ring-inner {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: #111316;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px; color: #4ade80; font-weight: 500;
+  }
+
+  .mock-bars { margin-bottom: 20px; }
+  .mock-bar-row { margin-bottom: 10px; }
+  .mock-bar-label { display: flex; justify-content: space-between; margin-bottom: 4px; }
+  .mock-bar-label span:first-child { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #6b7280; }
+  .mock-bar-label span:last-child { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #9ca3af; }
+  .mock-bar-track { height: 5px; background: #1e2228; border-radius: 3px; }
+  .mock-bar-fill { height: 100%; border-radius: 3px; }
+
+  .mock-flags { display: flex; flex-direction: column; gap: 8px; }
+  .mock-flag {
+    border-radius: 6px; padding: 9px 12px;
+    font-size: 11px; font-family: 'JetBrains Mono', monospace;
+    display: flex; gap: 8px; align-items: center;
+  }
+
+  /* ── DIVIDER ── */
+  .section-divider {
+    border: none; border-top: 1px solid var(--border); margin: 0;
+  }
+
+  /* ── HOW IT WORKS ── */
+  .how {
+    padding: 100px 48px;
+    max-width: 1100px; margin: 0 auto;
+  }
+  .section-eyebrow {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 12px;
+  }
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(36px, 4vw, 54px); font-weight: 700;
+    line-height: 1.1; margin-bottom: 60px; color: var(--ink);
+  }
+  .section-title em { font-style: italic; }
+
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; }
+  .step { position: relative; }
+  .step-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 72px; font-weight: 700; color: var(--border);
+    line-height: 1; margin-bottom: 16px;
+  }
+  .step-title { font-size: 18px; font-weight: 700; margin-bottom: 10px; color: var(--ink); }
+  .step-body { font-size: 14px; color: var(--muted); line-height: 1.7; }
+
+  .step-connector {
+    position: absolute; top: 36px; right: -20px;
+    font-size: 24px; color: var(--border);
+  }
+
+  /* ── FEATURES ── */
+  .features {
+    background: var(--ink);
+    padding: 100px 48px;
+  }
+  .features-inner { max-width: 1100px; margin: 0 auto; }
+  .features .section-eyebrow { color: var(--gold); }
+  .features .section-title { color: var(--cream); }
+
+  .features-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2px; background: #1e2228; border: 1px solid #1e2228; border-radius: 12px; overflow: hidden; }
+  .feature-item {
+    background: #111316; padding: 36px 32px;
+    transition: background 0.2s;
+  }
+  .feature-item:hover { background: #161a1e; }
+  .feature-icon { font-size: 28px; margin-bottom: 16px; }
+  .feature-title { font-size: 17px; font-weight: 700; color: var(--cream); margin-bottom: 10px; }
+  .feature-body { font-size: 14px; color: #6b7280; line-height: 1.7; }
+
+  /* ── PRICING ── */
+  .pricing {
+    padding: 100px 48px;
+    max-width: 900px; margin: 0 auto; text-align: center;
+  }
+  .pricing-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 56px; text-align: left; }
+
+  .price-card {
+    border: 1px solid var(--border); border-radius: 12px; padding: 36px;
+    transition: all 0.25s;
+    position: relative; overflow: hidden;
+  }
+  .price-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+  .price-card.featured {
+    background: var(--ink); border-color: var(--ink); color: var(--cream);
+  }
+  .price-card.featured .price-label,
+  .price-card.featured .price-desc { color: #6b7280; }
+  .price-card.featured .price-feature { color: #9ca3af; }
+  .price-card.featured .price-feature::before { color: var(--gold); }
+  .price-badge {
+    position: absolute; top: 20px; right: 20px;
+    background: var(--gold); color: var(--ink);
+    font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 4px 10px; border-radius: 2px;
+  }
+
+  .price-label { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+  .price-amount {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 56px; font-weight: 700; line-height: 1; margin-bottom: 6px;
+  }
+  .price-desc { font-size: 13px; color: var(--muted); margin-bottom: 28px; }
+  .price-features { list-style: none; margin-bottom: 32px; display: flex; flex-direction: column; gap: 10px; }
+  .price-feature {
+    font-size: 14px; color: var(--muted);
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .price-feature::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; }
+  .price-btn {
+    display: block; text-align: center; text-decoration: none;
+    padding: 14px; border-radius: 6px; font-size: 13px;
+    font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    transition: all 0.2s;
+  }
+  .price-btn-outline { border: 2px solid var(--border); color: var(--ink); }
+  .price-btn-outline:hover { border-color: var(--ink); }
+  .price-btn-solid { background: var(--gold); color: var(--ink); border: 2px solid var(--gold); }
+  .price-btn-solid:hover { background: var(--gold-light); border-color: var(--gold-light); }
+
+  /* ── TESTIMONIALS ── */
+  .testimonials {
+    background: var(--warm);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 80px 48px;
+  }
+  .testimonials-inner { max-width: 1100px; margin: 0 auto; }
+  .testi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 48px; }
+  .testi-card {
+    background: var(--cream); border: 1px solid var(--border);
+    border-radius: 10px; padding: 28px;
+  }
+  .testi-stars { color: var(--gold); font-size: 14px; margin-bottom: 14px; }
+  .testi-text { font-size: 14px; color: var(--ink); line-height: 1.7; margin-bottom: 20px; font-style: italic; font-family: 'Cormorant Garamond', serif; font-size: 17px; }
+  .testi-author { font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+
+  /* ── FAQ ── */
+  .faq { padding: 100px 48px; max-width: 720px; margin: 0 auto; }
+  .faq-item { border-bottom: 1px solid var(--border); padding: 24px 0; }
+  .faq-q { font-size: 17px; font-weight: 700; color: var(--ink); margin-bottom: 12px; cursor: pointer; display: flex; justify-content: space-between; }
+  .faq-a { font-size: 14px; color: var(--muted); line-height: 1.7; }
+
+  /* ── CTA FOOTER ── */
+  .cta-footer {
+    background: var(--ink);
+    padding: 100px 48px; text-align: center;
+  }
+  .cta-footer h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(36px, 5vw, 64px); font-weight: 700;
+    color: var(--cream); margin-bottom: 20px; line-height: 1.1;
+  }
+  .cta-footer h2 em { font-style: italic; color: var(--gold); }
+  .cta-footer p { font-size: 16px; color: #6b7280; margin-bottom: 40px; }
+
+  .email-form { display: flex; gap: 0; max-width: 460px; margin: 0 auto; }
+  .email-input {
+    flex: 1; padding: 15px 20px;
+    background: #111316; border: 1px solid #2d3139; border-right: none;
+    color: var(--cream); font-family: 'Syne', sans-serif; font-size: 14px;
+    border-radius: 6px 0 0 6px; outline: none;
+    transition: border-color 0.2s;
+  }
+  .email-input::placeholder { color: #4b5563; }
+  .email-input:focus { border-color: var(--gold); }
+  .email-submit {
+    background: var(--gold); color: var(--ink);
+    border: none; padding: 15px 24px;
+    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer;
+    border-radius: 0 6px 6px 0; transition: background 0.2s;
+  }
+  .email-submit:hover { background: var(--gold-light); }
+
+  .footer-bottom {
+    background: var(--ink);
+    border-top: 1px solid #1e2228;
+    padding: 24px 48px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .footer-copy { font-size: 12px; color: #4b5563; }
+  .footer-links { display: flex; gap: 24px; }
+  .footer-links a { font-size: 12px; color: #4b5563; text-decoration: none; }
+  .footer-links a:hover { color: #9ca3af; }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .hero-left > * { animation: fadeUp 0.7s ease forwards; opacity: 0; }
+  .hero-left > *:nth-child(1) { animation-delay: 0.1s; }
+  .hero-left > *:nth-child(2) { animation-delay: 0.2s; }
+  .hero-left > *:nth-child(3) { animation-delay: 0.35s; }
+  .hero-left > *:nth-child(4) { animation-delay: 0.5s; }
+  .hero-left > *:nth-child(5) { animation-delay: 0.65s; }
+  .hero-right { animation: fadeUp 0.9s ease 0.4s forwards; opacity: 0; }
+
+  @media (max-width: 768px) {
+    nav { padding: 14px 20px; }
+    .nav-links { display: none; }
+    .hero { grid-template-columns: 1fr; padding: 100px 20px 60px; }
+    .hero-right { display: none; }
+    .how, .features, .pricing, .faq { padding: 60px 20px; }
+    .steps { grid-template-columns: 1fr; }
+    .features-grid { grid-template-columns: 1fr; }
+    .pricing-cards { grid-template-columns: 1fr; }
+    .testi-grid { grid-template-columns: 1fr; }
+    .testimonials { padding: 60px 20px; }
+    .cta-footer { padding: 60px 20px; }
+    .footer-bottom { flex-direction: column; gap: 12px; padding: 20px; }
+    .email-form { flex-direction: column; }
+    .email-input { border-right: 1px solid #2d3139; border-bottom: none; border-radius: 6px 6px 0 0; }
+    .email-submit { border-radius: 0 0 6px 6px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Portfolio<span>IQ</span></div>
+  <div class="nav-links">
+    <a href="#how">How It Works</a>
+    <a href="#features">Features</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#pricing" class="nav-cta">Get Started</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-left">
+    <div class="hero-tag">Portfolio Intelligence Tool</div>
+    <h1 class="hero-headline">
+      Know exactly what your<br>portfolio is <em>really</em> doing
+    </h1>
+    <p class="hero-sub">
+      PortfolioIQ gives intermediate investors an instant health check — diversification score, sector risk flags, dividend yield, and exactly what's dragging you down.
+    </p>
+    <div class="hero-actions">
+      <a href="#pricing" class="btn-main">Analyze My Portfolio</a>
+      <a href="#how" class="btn-outline">See How It Works</a>
+    </div>
+    <div class="hero-social-proof">
+      <div class="proof-item">
+        <span class="proof-num">2,400+</span>
+        <span class="proof-label">Portfolios Analyzed</span>
+      </div>
+      <div class="proof-item">
+        <span class="proof-num">4.9★</span>
+        <span class="proof-label">Avg Rating</span>
+      </div>
+      <div class="proof-item">
+        <span class="proof-num">60 sec</span>
+        <span class="proof-label">To Your Score</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <div class="mock-card">
+      <div class="mock-topbar">
+        <div class="dot" style="background:#ff5f57"></div>
+        <div class="dot" style="background:#febc2e"></div>
+        <div class="dot" style="background:#28c840"></div>
+        <span style="margin-left:10px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#4b5563;">portfolioiq.app — health check</span>
+      </div>
+      <div class="mock-body">
+        <!-- Score -->
+        <div class="mock-score-row">
+          <div class="mock-score">
+            <div class="score-ring-mock">
+              <div class="score-ring-inner">72</div>
+            </div>
+            <div>
+              <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#4b5563; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px;">Diversification Score</div>
+              <div style="font-size:14px; color:#4ade80; font-weight:700;">Strong</div>
+            </div>
+          </div>
+          <div style="background:#111316; border-radius:10px; padding:16px 20px; display:flex; flex-direction:column; justify-content:center; min-width:120px;">
+            <div style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px;">Portfolio Value</div>
+            <div style="font-family:'JetBrains Mono',monospace; font-size:20px; color:#e2e8f0;">$35,400</div>
+          </div>
+        </div>
+
+        <!-- Bars -->
+        <div class="mock-bars">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:12px;">Sector Concentration</div>
+          <div class="mock-bar-row">
+            <div class="mock-bar-label"><span>Technology</span><span style="color:#fbbf24;">43.2%</span></div>
+            <div class="mock-bar-track"><div class="mock-bar-fill" style="width:43.2%; background:#fbbf24;"></div></div>
+          </div>
+          <div class="mock-bar-row">
+            <div class="mock-bar-label"><span>Healthcare</span><span style="color:#38bdf8;">14.7%</span></div>
+            <div class="mock-bar-track"><div class="mock-bar-fill" style="width:14.7%; background:#38bdf8;"></div></div>
+          </div>
+          <div class="mock-bar-row">
+            <div class="mock-bar-label"><span>Financials</span><span style="color:#38bdf8;">22.6%</span></div>
+            <div class="mock-bar-track"><div class="mock-bar-fill" style="width:22.6%; background:#38bdf8;"></div></div>
+          </div>
+          <div class="mock-bar-row">
+            <div class="mock-bar-label"><span>Consumer</span><span style="color:#4ade80;">9.5%</span></div>
+            <div class="mock-bar-track"><div class="mock-bar-fill" style="width:9.5%; background:#4ade80;"></div></div>
+          </div>
+        </div>
+
+        <!-- Flags -->
+        <div class="mock-flags">
+          <div class="mock-flag" style="background:#1c1008; border:1px solid #78350f; color:#fbbf24;">
+            <span>⚠</span> Heavy concentration in Technology (43%)
+          </div>
+          <div class="mock-flag" style="background:#0a1f14; border:1px solid #14532d; color:#4ade80;">
+            <span>✓</span> Solid dividend yield of 1.82%
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="section-divider">
+
+<!-- HOW IT WORKS -->
+<section class="how" id="how">
+  <div class="section-eyebrow">How It Works</div>
+  <h2 class="section-title">From holdings to<br><em>clarity</em> in 60 seconds</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">01</div>
+      <div class="step-title">Enter Your Holdings</div>
+      <p class="step-body">Input your ticker symbols, position sizes, and sector. No brokerage connection required — your data stays private.</p>
+      <div class="step-connector">→</div>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <div class="step-title">Get Your Score</div>
+      <p class="step-body">PortfolioIQ runs its diversification engine across sector concentration, holding count, dividend yield, and fee drag.</p>
+      <div class="step-connector">→</div>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <div class="step-title">Act on the Flags</div>
+      <p class="step-body">Specific, plain-English alerts tell you exactly what's hurting your portfolio — and what's working in your favor.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="section-divider">
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="features-inner">
+    <div class="section-eyebrow">What You Get</div>
+    <h2 class="section-title" style="color:var(--cream);">Built for investors who<br><em>actually care</em> about returns</h2>
+    <div class="features-grid">
+      <div class="feature-item">
+        <div class="feature-icon">⬡</div>
+        <div class="feature-title">Diversification Score</div>
+        <p class="feature-body">A single 0–100 score built from sector spread, holding count, and concentration risk. Share it. Track it. Improve it.</p>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">⚑</div>
+        <div class="feature-title">Smart Risk Flags</div>
+        <p class="feature-body">Automatic plain-English warnings when something is off — over-concentration, too few holdings, high expense ratios draining your returns.</p>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">◈</div>
+        <div class="feature-title">Sector Breakdown</div>
+        <div class="feature-body">Visual concentration bars across all 10 GICS sectors with color-coded risk thresholds. See your blind spots instantly.</div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">◎</div>
+        <div class="feature-title">Dividend & Fee Analysis</div>
+        <p class="feature-body">Weighted average dividend yield and expense ratio across your entire portfolio. Know exactly how much you're earning — and losing — in fees.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testimonials">
+  <div class="testimonials-inner">
+    <div class="section-eyebrow">What Investors Say</div>
+    <h2 class="section-title">Real results from<br><em>real portfolios</em></h2>
+    <div class="testi-grid">
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">"I had no idea 60% of my portfolio was in tech until PortfolioIQ flagged it. Made rebalancing moves the same week."</p>
+        <div class="testi-author">Marcus T. — Self-directed investor, 6 years</div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">"The expense ratio flag alone probably saved me $400 a year. I never tracked that number before. Simple and eye-opening."</p>
+        <div class="testi-author">Sarah L. — Passive index investor</div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">"Finally a tool that gives me a real answer instead of generic advice. My score went from 44 to 71 in two months."</p>
+        <div class="testi-author">James R. — Growth investor, 4 years</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing" id="pricing">
+  <div class="section-eyebrow">Pricing</div>
+  <h2 class="section-title">Simple, honest pricing.<br><em>No surprises.</em></h2>
+  <div class="pricing-cards">
+    <div class="price-card">
+      <div class="price-label">Monthly</div>
+      <div class="price-amount">$9</div>
+      <div class="price-desc">per month, cancel anytime</div>
+      <ul class="price-features">
+        <li class="price-feature">Unlimited portfolio analyses</li>
+        <li class="price-feature">Diversification score & flags</li>
+        <li class="price-feature">Sector concentration breakdown</li>
+        <li class="price-feature">Dividend & fee tracking</li>
+      </ul>
+      <a href="#" class="price-btn price-btn-outline">Start Monthly</a>
+    </div>
+    <div class="price-card featured">
+      <div class="price-badge">Best Value</div>
+      <div class="price-label">Lifetime Access</div>
+      <div class="price-amount" style="color:var(--gold);">$49</div>
+      <div class="price-desc">one-time payment, yours forever</div>
+      <ul class="price-features">
+        <li class="price-feature">Everything in Monthly</li>
+        <li class="price-feature">All future feature updates</li>
+        <li class="price-feature">Priority support</li>
+        <li class="price-feature">No recurring charges, ever</li>
+      </ul>
+      <a href="#" class="price-btn price-btn-solid">Get Lifetime Access →</a>
+    </div>
+  </div>
+</section>
+
+<hr class="section-divider">
+
+<!-- FAQ -->
+<section class="faq" id="faq">
+  <div class="section-eyebrow">FAQ</div>
+  <h2 class="section-title" style="font-size:clamp(28px,3vw,42px);">Common <em>questions</em></h2>
+
+  <div class="faq-item">
+    <div class="faq-q">Do you connect to my brokerage?<span>+</span></div>
+    <p class="faq-a">No. You manually enter your holdings — ticker, value, sector. Your financial data never leaves your device.</p>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">Is this financial advice?<span>+</span></div>
+    <p class="faq-a">No. PortfolioIQ is an educational analysis tool. It surfaces data and patterns to help you make more informed decisions. Always consult a licensed financial advisor for personalized advice.</p>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">How is the diversification score calculated?<span>+</span></div>
+    <p class="faq-a">The score is based on three factors: sector spread (how many sectors you're in), top sector concentration, and number of holdings. Each is weighted to produce a 0–100 score.</p>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">Can I cancel my monthly subscription?<span>+</span></div>
+    <p class="faq-a">Yes, anytime with one click. No hoops, no questions. That's why we also offer the lifetime plan — many users prefer paying once.</p>
+  </div>
+</section>
+
+<!-- CTA FOOTER -->
+<section class="cta-footer">
+  <h2>Your portfolio deserves<br><em>better clarity.</em></h2>
+  <p>Join thousands of investors who finally understand what's inside their portfolio.</p>
+  <div class="email-form">
+    <input class="email-input" type="email" placeholder="Enter your email address" />
+    <button class="email-submit">Get Early Access</button>
+  </div>
+  <p style="margin-top:16px; font-size:12px; color:#374151;">No spam. Unsubscribe anytime.</p>
+</section>
+
+<div class="footer-bottom">
+  <span class="footer-copy">© 2026 PortfolioIQ. All rights reserved.</span>
+  <div class="footer-links">
+    <a href="#">Privacy</a>
+    <a href="#">Terms</a>
+    <a href="#">Contact</a>
+  </div>
+</div>
+
+<script>
+  // FAQ accordion
+  document.querySelectorAll('.faq-q').forEach(q => {
+    q.addEventListener('click', () => {
+      const answer = q.nextElementSibling;
+      const isOpen = answer.style.display === 'block';
+      document.querySelectorAll('.faq-a').forEach(a => a.style.display = 'none');
+      document.querySelectorAll('.faq-q span').forEach(s => s.textContent = '+');
+      if (!isOpen) {
+        answer.style.display = 'block';
+        q.querySelector('span').textContent = '−';
+      }
+    });
+  });
+
+  // Email form
+  document.querySelector('.email-submit').addEventListener('click', () => {
+    const input = document.querySelector('.email-input');
+    if (input.value && input.value.includes('@')) {
+      input.value = '';
+      input.placeholder = '🎉 You\'re on the list!';
+      input.style.color = '#4ade80';
+    }
+  });
+</script>
+</body>
+</html>
