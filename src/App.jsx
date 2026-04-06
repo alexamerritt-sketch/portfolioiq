@@ -168,6 +168,38 @@ export default function App() {
       `}</style>
 
       {/* Header */}
+      <div style={{
+  background: "linear-gradient(135deg, #b8933a, #d4a84b)",
+  padding: "12px 24px",
+  textAlign: "center",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "16px",
+  flexWrap: "wrap"
+}}>
+  <span style={{ fontSize: 14, fontWeight: 600, color: "#0c0e0f" }}>
+    📊 You're using the free preview of PortfolioIQ
+  </span>
+  
+    href="https://merritt84.gumroad.com/l/portfolio-health-checker"
+    target="_blank"
+    rel="noopener noreferrer"
+    style={{
+      background: "#0c0e0f",
+      color: "#d4a84b",
+      padding: "8px 18px",
+      borderRadius: "6px",
+      fontSize: 13,
+      fontWeight: 700,
+      textDecoration: "none",
+      letterSpacing: "0.04em",
+      whiteSpace: "nowrap"
+    }}
+  >
+    Unlock Full Access — $7 →
+  </a>
+</div>
       <div style={{ borderBottom: "1px solid #0f172a", padding: "28px 0 22px", background: "#020817" }}>
         <div style={{ maxWidth: 820, margin: "0 auto", padding: "0 24px", display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
           <div>
