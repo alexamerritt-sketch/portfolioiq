@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 
 const SECTORS = ["Technology", "Healthcare", "Financials", "Consumer", "Energy", "Utilities", "Materials", "Industrials", "Real Estate", "Communication"];
 const GUMROAD_URL = "https://merritt84.gumroad.com/l/portfolio-health-checker";
+const PRODUCT_PERMALINK = "portfolio-health-checker";
 
 const initialHoldings = [
   { id: 1, ticker: "AAPL", name: "Apple Inc.", value: 12400, sector: "Technology", dividendYield: 0.5, expenseRatio: 0 },
@@ -11,6 +12,37 @@ const initialHoldings = [
 ];
 
 function generateId() { return Date.now() + Math.random(); }
+
+async function verifyGumroadKey(licenseKey) {
+  // Use a CORS proxy to call Gumroad API from the browser
+  const body = new URLSearchParams({
+    product_permalink: PRODUCT_PERMALINK,
+    license_key: licenseKey.trim(),
+    increment_uses_count: "false"
+  });
+
+  // Try direct first, then fall back to proxy
+  const urls = [
+    "https://api.gumroad.com/v2/licenses/verify",
+    "https://corsproxy.io/?" + encodeURIComponent("https://api.gumroad.com/v2/licenses/verify")
+  ];
+
+  for (const url of urls) {
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: body.toString()
+      });
+      const data = await res.json();
+      if (data.success === true) return { valid: true };
+      if (data.success === false) return { valid: false };
+    } catch (e) {
+      continue;
+    }
+  }
+  return { valid: false, error: "network" };
+}
 
 function calcMetrics(holdings) {
   if (!holdings.length) return null;
@@ -98,7 +130,7 @@ function LoadingScreen({ onDone }) {
             <div style={{ width: 22, height: 22, borderRadius: "50%", background: step > i ? "#4ade80" : "#1e293b", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: "#020817", fontWeight: 700, transition: "background 0.3s", flexShrink: 0 }}>
               {step > i ? "✓" : i + 1}
             </div>
-            <span style={{ fontSize: 14, color: step > i ? "#e2e8f0" : "#334155", fontFamily: "'DM Sans', sans-serif" }}>{s}</span>
+            <span style={{ fontSize: 14, color: step > i ? "#e2e8f0" : "#334155" }}>{s}</span>
           </div>
         ))}
       </div>
@@ -115,24 +147,18 @@ function LicenseModal({ onUnlock, onClose }) {
   const [checking, setChecking] = useState(false);
 
   async function handleCheck() {
+    if (!key.trim()) return;
     setChecking(true);
     setError("");
-    try {
-      const response = await fetch("/api/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ licenseKey: key.trim() })
-      });
-      const data = await response.json();
-      if (data.valid) {
-        localStorage.setItem("portfolioiq_verified", "true");
-        localStorage.setItem("portfolioiq_key", key.trim());
-        onUnlock();
-      } else {
-        setError("Invalid license key. Please check your Gumroad purchase email and try again.");
-      }
-    } catch (err) {
-      setError("Could not verify key. Please check your connection and try again.");
+    const result = await verifyGumroadKey(key.trim());
+    if (result.valid) {
+      localStorage.setItem("portfolioiq_verified", "true");
+      localStorage.setItem("portfolioiq_key", key.trim());
+      onUnlock();
+    } else if (result.error === "network") {
+      setError("Network error — please check your connection and try again.");
+    } else {
+      setError("Invalid license key. Please check your Gumroad purchase email and try again.");
     }
     setChecking(false);
   }
@@ -155,11 +181,9 @@ function LicenseModal({ onUnlock, onClose }) {
           style={{ marginBottom: 10, fontFamily: "'DM Mono', monospace", fontSize: 13, letterSpacing: "0.04em" }}
         />
         {error && <div style={{ color: "#f87171", fontSize: 12, marginBottom: 10, lineHeight: 1.5 }}>{error}</div>}
-        <button
-          onClick={handleCheck}
-          disabled={!key || checking}
+        <button onClick={handleCheck} disabled={!key || checking}
           style={{ width: "100%", background: checking ? "#1e293b" : "#38bdf8", color: checking ? "#475569" : "#020817", border: "none", padding: "13px", borderRadius: 8, fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 14, cursor: key && !checking ? "pointer" : "not-allowed", transition: "all 0.2s", marginBottom: 14 }}>
-          {checking ? "Verifying key..." : "Unlock Full Access →"}
+          {checking ? "Verifying with Gumroad..." : "Unlock Full Access →"}
         </button>
         <div style={{ textAlign: "center" }}>
           <span style={{ fontSize: 12, color: "#475569" }}>Don't have a key? </span>
@@ -199,7 +223,6 @@ export default function App() {
   function handleRemove(id) { setHoldings(prev => prev.filter(h => h.id !== id)); setStage("input"); }
   function handleAnalyze() { setMetrics(calcMetrics(holdings)); setStage("loading"); }
   function handleUnlock() { setUnlocked(true); setShowLicenseModal(false); }
-
   const total = holdings.reduce((s, h) => s + h.value, 0);
 
   return (
@@ -228,7 +251,6 @@ export default function App() {
         .add-form-row1 { display: grid; grid-template-columns: 1fr 2fr 1.5fr; gap: 10px; margin-bottom: 10px; }
         .add-form-row2 { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 10px; align-items: end; }
         .metrics-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 20px; }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         @media (max-width: 600px) {
           .add-form-row1 { grid-template-columns: 1fr 1fr; }
           .add-form-row2 { grid-template-columns: 1fr 1fr; }
@@ -241,7 +263,6 @@ export default function App() {
 
       {showLicenseModal && <LicenseModal onUnlock={handleUnlock} onClose={() => setShowLicenseModal(false)} />}
 
-      {/* Banner */}
       {!unlocked ? (
         <div style={{ background: "linear-gradient(135deg, #92700a, #b8933a)", padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", flexWrap: "wrap" }}>
           <span style={{ fontSize: 13, fontWeight: 600, color: "#fef3c7" }}>📊 Free preview — full analysis locked</span>
@@ -257,8 +278,6 @@ export default function App() {
       )}
 
       <div style={{ minHeight: "100vh", background: "#020817", fontFamily: "'DM Sans', sans-serif", color: "#e2e8f0", paddingBottom: 80 }}>
-
-        {/* Header */}
         <div style={{ borderBottom: "1px solid #0f172a", padding: "20px 0 16px" }}>
           <div style={{ maxWidth: 820, margin: "0 auto", padding: "0 16px", display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
             <div>
@@ -273,8 +292,6 @@ export default function App() {
         </div>
 
         <div style={{ maxWidth: 820, margin: "0 auto", padding: "24px 16px 0" }}>
-
-          {/* Holdings */}
           <div style={{ marginBottom: 24 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, gap: 8 }}>
               <h2 style={{ fontSize: 13, fontWeight: 600, color: "#94a3b8", letterSpacing: "0.04em", textTransform: "uppercase" }}>Your Holdings</h2>
@@ -328,8 +345,6 @@ export default function App() {
 
           {stage === "results" && metrics && (
             <div ref={resultsRef} style={{ opacity: animIn ? 1 : 0, transition: "opacity 0.5s ease" }}>
-
-              {/* Score — always visible to free users */}
               <div style={{ background: "#0a0f1a", border: `1px solid ${metrics.scoreColor}44`, borderRadius: 16, padding: "24px 20px", marginBottom: 20 }}>
                 <div className="score-flex" style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
                   <ScoreRing score={metrics.divScore} color={metrics.scoreColor} size={110} />
@@ -354,7 +369,6 @@ export default function App() {
                 )}
               </div>
 
-              {/* Full Results — blurred behind paywall */}
               <div style={{ position: "relative" }}>
                 {!unlocked && (
                   <div style={{ position: "absolute", inset: 0, zIndex: 10, background: "rgba(2,8,23,0.65)", backdropFilter: "blur(8px)", borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, minHeight: 300 }}>
@@ -370,7 +384,6 @@ export default function App() {
                 )}
 
                 <div style={{ filter: unlocked ? "none" : "blur(5px)", pointerEvents: unlocked ? "auto" : "none", userSelect: unlocked ? "auto" : "none" }}>
-
                   <div style={{ marginBottom: 20 }}>
                     <div style={{ fontSize: 12, color: "#475569", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 12 }}>Risk Flags</div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -381,7 +394,6 @@ export default function App() {
                       ))}
                     </div>
                   </div>
-
                   <div className="metrics-grid">
                     <div className="metric-card">
                       <div style={{ fontSize: 11, color: "#475569", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>Avg Dividend Yield</div>
@@ -399,12 +411,10 @@ export default function App() {
                       <div style={{ fontSize: 11, color: "#475569", marginTop: 4 }}>{metrics.numSectors >= 6 ? "Good spread" : "Room to grow"}</div>
                     </div>
                   </div>
-
                   <div className="metric-card" style={{ marginBottom: 20 }}>
                     <div style={{ fontSize: 12, color: "#475569", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 16 }}>Sector Concentration</div>
                     {metrics.sectorPcts.map(sp => <SectorBar key={sp.sector} sector={sp.sector} pct={sp.pct} />)}
                   </div>
-
                   {metrics.rebalance.length > 0 && (
                     <div className="metric-card" style={{ marginBottom: 20, border: "1px solid #1e3a5f", background: "#080f1a" }}>
                       <div style={{ fontSize: 12, color: "#38bdf8", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 4 }}>📋 Your Rebalancing Plan</div>
@@ -419,7 +429,6 @@ export default function App() {
                       </div>
                     </div>
                   )}
-
                   <div style={{ textAlign: "center", fontSize: 11, color: "#1e293b", marginBottom: 20 }}>For informational purposes only. Not financial advice.</div>
                   <div style={{ textAlign: "center" }}>
                     <button className="btn-ghost" onClick={() => setStage("input")} style={{ fontSize: 12 }}>← Analyze Another Portfolio</button>
