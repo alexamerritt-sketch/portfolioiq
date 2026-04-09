@@ -4,6 +4,13 @@ const SECTORS = ["Technology", "Healthcare", "Financials", "Consumer", "Energy",
 const GUMROAD_URL = "https://merritt84.gumroad.com/l/portfolio-health-checker";
 const PRODUCT_PERMALINK = "portfolio-health-checker";
 
+// Backup keys — add real customer keys here if Gumroad API ever fails
+// Real purchases are verified automatically through Gumroad API
+const BACKUP_KEYS = [
+  "C8C838B5-3E8A46A5-9DB3B785-A93940AB", // test key
+  "9A77C2F6-54A748D4-AACEF75D-6716BF1E", // test key 2
+];
+
 const initialHoldings = [
   { id: 1, ticker: "AAPL", name: "Apple Inc.", value: 12400, sector: "Technology", dividendYield: 0.5, expenseRatio: 0 },
   { id: 2, ticker: "MSFT", name: "Microsoft Corp.", value: 9800, sector: "Technology", dividendYield: 0.7, expenseRatio: 0 },
@@ -13,35 +20,37 @@ const initialHoldings = [
 
 function generateId() { return Date.now() + Math.random(); }
 
-async function verifyGumroadKey(licenseKey) {
-  // Use a CORS proxy to call Gumroad API from the browser
-  const body = new URLSearchParams({
-    product_permalink: PRODUCT_PERMALINK,
-    license_key: licenseKey.trim(),
-    increment_uses_count: "false"
-  });
+async function verifyKey(licenseKey) {
+  const clean = licenseKey.trim().toUpperCase();
 
-  // Try direct first, then fall back to proxy
-  const urls = [
-    "https://api.gumroad.com/v2/licenses/verify",
-    "https://corsproxy.io/?" + encodeURIComponent("https://api.gumroad.com/v2/licenses/verify")
-  ];
+  // Check backup keys first (works instantly, no network needed)
+  if (BACKUP_KEYS.includes(clean)) {
+    return { valid: true };
+  }
 
-  for (const url of urls) {
-    try {
-      const res = await fetch(url, {
+  // Try Gumroad API for real purchases
+  try {
+    const body = new URLSearchParams({
+      product_permalink: PRODUCT_PERMALINK,
+      license_key: licenseKey.trim(),
+      increment_uses_count: "false"
+    });
+
+    const res = await fetch(
+      "https://corsproxy.io/?" + encodeURIComponent("https://api.gumroad.com/v2/licenses/verify"),
+      {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: body.toString()
-      });
-      const data = await res.json();
-      if (data.success === true) return { valid: true };
-      if (data.success === false) return { valid: false };
-    } catch (e) {
-      continue;
-    }
+      }
+    );
+    const data = await res.json();
+    if (data.success === true) return { valid: true };
+  } catch (e) {
+    // Network error — fall through
   }
-  return { valid: false, error: "network" };
+
+  return { valid: false };
 }
 
 function calcMetrics(holdings) {
@@ -150,13 +159,11 @@ function LicenseModal({ onUnlock, onClose }) {
     if (!key.trim()) return;
     setChecking(true);
     setError("");
-    const result = await verifyGumroadKey(key.trim());
+    const result = await verifyKey(key.trim());
     if (result.valid) {
       localStorage.setItem("portfolioiq_verified", "true");
       localStorage.setItem("portfolioiq_key", key.trim());
       onUnlock();
-    } else if (result.error === "network") {
-      setError("Network error — please check your connection and try again.");
     } else {
       setError("Invalid license key. Please check your Gumroad purchase email and try again.");
     }
@@ -183,7 +190,7 @@ function LicenseModal({ onUnlock, onClose }) {
         {error && <div style={{ color: "#f87171", fontSize: 12, marginBottom: 10, lineHeight: 1.5 }}>{error}</div>}
         <button onClick={handleCheck} disabled={!key || checking}
           style={{ width: "100%", background: checking ? "#1e293b" : "#38bdf8", color: checking ? "#475569" : "#020817", border: "none", padding: "13px", borderRadius: 8, fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 14, cursor: key && !checking ? "pointer" : "not-allowed", transition: "all 0.2s", marginBottom: 14 }}>
-          {checking ? "Verifying with Gumroad..." : "Unlock Full Access →"}
+          {checking ? "Verifying..." : "Unlock Full Access →"}
         </button>
         <div style={{ textAlign: "center" }}>
           <span style={{ fontSize: 12, color: "#475569" }}>Don't have a key? </span>
@@ -382,7 +389,6 @@ export default function App() {
                     </div>
                   </div>
                 )}
-
                 <div style={{ filter: unlocked ? "none" : "blur(5px)", pointerEvents: unlocked ? "auto" : "none", userSelect: unlocked ? "auto" : "none" }}>
                   <div style={{ marginBottom: 20 }}>
                     <div style={{ fontSize: 12, color: "#475569", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 12 }}>Risk Flags</div>
