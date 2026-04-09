@@ -1,13 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 
 const SECTORS = ["Technology", "Healthcare", "Financials", "Consumer", "Energy", "Utilities", "Materials", "Industrials", "Real Estate", "Communication"];
-
-// Add new license keys here each time someone purchases
-// Format: "PORTFOLIOIQ-XXXX-XXXX-XXXX"
-const VALID_KEYS = [
-  "PORTFOLIOIQ-DEMO-1234-5678", // test key
-];
-
 const GUMROAD_URL = "https://merritt84.gumroad.com/l/portfolio-health-checker";
 
 const initialHoldings = [
@@ -120,29 +113,51 @@ function LicenseModal({ onUnlock, onClose }) {
   const [key, setKey] = useState("");
   const [error, setError] = useState("");
   const [checking, setChecking] = useState(false);
-  function handleCheck() {
-    setChecking(true); setError("");
-    setTimeout(() => {
-      const clean = key.trim().toUpperCase();
-      if (VALID_KEYS.includes(clean)) {
-        localStorage.setItem("portfolioiq_key", clean);
+
+  async function handleCheck() {
+    setChecking(true);
+    setError("");
+    try {
+      const response = await fetch("/api/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ licenseKey: key.trim() })
+      });
+      const data = await response.json();
+      if (data.valid) {
+        localStorage.setItem("portfolioiq_verified", "true");
+        localStorage.setItem("portfolioiq_key", key.trim());
         onUnlock();
       } else {
         setError("Invalid license key. Please check your Gumroad purchase email and try again.");
       }
-      setChecking(false);
-    }, 900);
+    } catch (err) {
+      setError("Could not verify key. Please check your connection and try again.");
+    }
+    setChecking(false);
   }
+
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(2,8,23,0.9)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
       <div style={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: 16, padding: "32px 24px", maxWidth: 400, width: "100%" }}>
         <button onClick={onClose} style={{ float: "right", background: "none", border: "none", color: "#475569", fontSize: 22, cursor: "pointer", marginTop: -8, lineHeight: 1 }}>×</button>
         <div style={{ fontSize: 32, marginBottom: 12 }}>🔑</div>
         <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 700, color: "#f1f5f9", marginBottom: 8 }}>Enter Your License Key</h3>
-        <p style={{ fontSize: 13, color: "#64748b", lineHeight: 1.7, marginBottom: 20 }}>Check your Gumroad purchase email for your unique key. It looks like:<br/><span style={{ color: "#38bdf8", fontFamily: "'DM Mono', monospace", fontSize: 12 }}>PORTFOLIOIQ-XXXX-XXXX-XXXX</span></p>
-        <input placeholder="PORTFOLIOIQ-XXXX-XXXX-XXXX" value={key} onChange={e => setKey(e.target.value)} onKeyDown={e => e.key === "Enter" && handleCheck()} style={{ marginBottom: 10, fontFamily: "'DM Mono', monospace", fontSize: 13, letterSpacing: "0.04em" }} />
+        <p style={{ fontSize: 13, color: "#64748b", lineHeight: 1.7, marginBottom: 20 }}>
+          Check your Gumroad purchase email for your unique license key. It looks like:<br />
+          <span style={{ color: "#38bdf8", fontFamily: "'DM Mono', monospace", fontSize: 12 }}>6F0E4C97-B72A4E69-A11BF6C4-AF6517E7</span>
+        </p>
+        <input
+          placeholder="Paste your license key here"
+          value={key}
+          onChange={e => setKey(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && handleCheck()}
+          style={{ marginBottom: 10, fontFamily: "'DM Mono', monospace", fontSize: 13, letterSpacing: "0.04em" }}
+        />
         {error && <div style={{ color: "#f87171", fontSize: 12, marginBottom: 10, lineHeight: 1.5 }}>{error}</div>}
-        <button onClick={handleCheck} disabled={!key || checking}
+        <button
+          onClick={handleCheck}
+          disabled={!key || checking}
           style={{ width: "100%", background: checking ? "#1e293b" : "#38bdf8", color: checking ? "#475569" : "#020817", border: "none", padding: "13px", borderRadius: 8, fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 14, cursor: key && !checking ? "pointer" : "not-allowed", transition: "all 0.2s", marginBottom: 14 }}>
           {checking ? "Verifying key..." : "Unlock Full Access →"}
         </button>
@@ -162,7 +177,7 @@ export default function App() {
   const [stage, setStage] = useState("input");
   const [metrics, setMetrics] = useState(null);
   const [unlocked, setUnlocked] = useState(() => {
-    try { const k = localStorage.getItem("portfolioiq_key"); return k && VALID_KEYS.includes(k); } catch { return false; }
+    try { return localStorage.getItem("portfolioiq_verified") === "true"; } catch { return false; }
   });
   const [showLicenseModal, setShowLicenseModal] = useState(false);
   const [animIn, setAnimIn] = useState(false);
@@ -314,7 +329,7 @@ export default function App() {
           {stage === "results" && metrics && (
             <div ref={resultsRef} style={{ opacity: animIn ? 1 : 0, transition: "opacity 0.5s ease" }}>
 
-              {/* Score — always visible */}
+              {/* Score — always visible to free users */}
               <div style={{ background: "#0a0f1a", border: `1px solid ${metrics.scoreColor}44`, borderRadius: 16, padding: "24px 20px", marginBottom: 20 }}>
                 <div className="score-flex" style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
                   <ScoreRing score={metrics.divScore} color={metrics.scoreColor} size={110} />
@@ -339,14 +354,14 @@ export default function App() {
                 )}
               </div>
 
-              {/* Full Results */}
+              {/* Full Results — blurred behind paywall */}
               <div style={{ position: "relative" }}>
                 {!unlocked && (
                   <div style={{ position: "absolute", inset: 0, zIndex: 10, background: "rgba(2,8,23,0.65)", backdropFilter: "blur(8px)", borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, minHeight: 300 }}>
                     <div style={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: 16, padding: "32px 24px", textAlign: "center", maxWidth: 360, width: "100%" }}>
                       <div style={{ fontSize: 36, marginBottom: 12 }}>📊</div>
                       <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 700, color: "#f1f5f9", marginBottom: 10 }}>Your Full Report Is Ready</h3>
-                      <p style={{ fontSize: 13, color: "#64748b", lineHeight: 1.7, marginBottom: 20 }}>Unlock risk flags, sector concentration breakdown, dividend & fee analysis, and a personalized step-by-step rebalancing plan.</p>
+                      <p style={{ fontSize: 13, color: "#64748b", lineHeight: 1.7, marginBottom: 20 }}>Unlock risk flags, sector breakdown, dividend & fee analysis, and a personalized step-by-step rebalancing plan.</p>
                       <a href={GUMROAD_URL} target="_blank" rel="noopener noreferrer" style={{ display: "block", background: "linear-gradient(135deg, #b8933a, #d4a84b)", color: "#0c0e0f", padding: "14px", borderRadius: 8, fontSize: 15, fontWeight: 800, textDecoration: "none", marginBottom: 10 }}>Unlock Full Access — $7 →</a>
                       <button onClick={() => setShowLicenseModal(true)} style={{ background: "transparent", color: "#475569", border: "1px solid #1e293b", padding: "10px", borderRadius: 8, fontSize: 13, cursor: "pointer", width: "100%", fontFamily: "'DM Sans', sans-serif" }}>I already purchased — enter key</button>
                       <p style={{ fontSize: 11, color: "#334155", marginTop: 12 }}>One-time payment · No subscription · Instant access</p>
@@ -355,6 +370,7 @@ export default function App() {
                 )}
 
                 <div style={{ filter: unlocked ? "none" : "blur(5px)", pointerEvents: unlocked ? "auto" : "none", userSelect: unlocked ? "auto" : "none" }}>
+
                   <div style={{ marginBottom: 20 }}>
                     <div style={{ fontSize: 12, color: "#475569", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 12 }}>Risk Flags</div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
