@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 const SECTORS = ["Technology", "Healthcare", "Financials", "Consumer", "Energy", "Utilities", "Materials", "Industrials", "Real Estate", "Communication", "ETF - Broad Market", "ETF - Technology", "ETF - Financials", "ETF - Healthcare", "ETF - Energy", "ETF - Bonds", "ETF - International", "ETF - Commodities", "ETF - Real Estate", "ETF - Consumer", "ETF - Communication", "ETF - Utilities", "ETF - Materials", "ETF - Industrials", "Crypto"];
 const ASSET_TYPES = ["Stock", "ETF", "Crypto"];
 const WHOP_URL = "https://whop.com/portfolioiq/portfolioiq-b9/";
-const WHOP_CLIENT_ID = "AfziGgmluNiaN5Xf45pt6tSubcwU1877dKQOPVGfDig";
+const WHOP_CLIENT_ID = "app_cITuJl8hI8mi0c";
 const APP_URL = "https://portfolioiq-six.vercel.app";
 const PRICE = "$19.99";
 
